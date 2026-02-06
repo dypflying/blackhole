@@ -696,7 +696,7 @@ class Engine {
         this.raytracing = false;
         
         this.workers = [];
-        this.workerCount = 8;
+        this.workerCount = 4;
         this.workerResults = [];
         this.createWorkers(this.workerCount);
         
@@ -842,6 +842,11 @@ class Engine {
         document.getElementById('stepsSlider').addEventListener('input', (e) => {
             this.maxSteps = parseInt(e.target.value);
             document.getElementById('stepsValue').textContent = (this.maxSteps / 1000).toFixed(0) + 'k';
+        });
+        
+        document.getElementById('workerCount').addEventListener('change', (e) => {
+            const count = parseInt(e.target.value);
+            this.createWorkers(count);
         });
         
         document.getElementById('renderBtn').addEventListener('click', () => {
