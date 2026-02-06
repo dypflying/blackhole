@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGL Test - Simple</title>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: monospace; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="info">
+        <div>Status: <span id="status">Initializing...</span></div>
+        <div>WebGL: <span id="webgl">Checking...</span></div>
+        <div>FPS: <span id="fps">0</span></div>
+    </div>
+    
+    <script>
+        console.log('🚀 Script started');
+        
+        const canvas = document.getElementById('canvas');
+        canvas.width = 800;
+        canvas.height = 600;
+        
+        const gl = canvas.getContext('webgl');
+        
+        if (!gl) {
+            document.getElementById('webgl').textContent = '❌ NOT SUPPORTED';
+            document.getElementById('status').textContent = 'Error: WebGL not available';
+            console.error('WebGL not supported');
+        } else {
+            document.getElementById('webgl').textContent = '✅ SUPPORTED';
+            console.log('✅ WebGL context created');
+            console.log('Version:', gl.getParameter(gl.VERSION));
+            console.log('Vendor:', gl.getParameter(gl.VENDOR));
+            
+            const vertSrc = `
+                attribute vec2 aPos;
+                void main() {
+                    gl_Position = vec4(aPos, 0.0, 1.0);
+                }
+            `;
+            
+            const fragSrc = `
+                precision mediump float;
+                void main() {
+                    gl_FragColor = vec4(1.0, 0.5, 0.0, 1.0);
+                }
+            `;
+            
+            const vertShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertShader, vertSrc);
+            gl.compileShader(vertShader);
+            
+            if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
+                console.error('Vertex shader error:', gl.getShaderInfoLog(vertShader));
+            } else {
+                console.log('✅ Vertex shader compiled');
+            }
+            
+            const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragShader, fragSrc);
+            gl.compileShader(fragShader);
+            
+            if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+                console.error('Fragment shader error:', gl.getShaderInfoLog(fragShader));
+            } else {
+                console.log('✅ Fragment shader compiled');
+            }
+            
+            const program = gl.createProgram();
+            gl.attachShader(program, vertShader);
+            gl.attachShader(program, fragShader);
+            gl.linkProgram(program);
+            
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Program link error:', gl.getProgramInfoLog(program));
+            } else {
+                console.log('✅ Shader program linked');
+            }
+            
+            const vertices = new Float32Array([
+                -0.5, -0.5,
+                 0.5, -0.5,
+                 0.0,  0.5
+            ]);
+            
+            const vbo = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+            
+            console.log('✅ Buffer created');
+            
+            const aPos = gl.getAttribLocation(program, 'aPos');
+            
+            let frameCount = 0;
+            let lastTime = performance.now();
+            
+            function render() {
+                gl.clearColor(0.1, 0.1, 0.2, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                
+                gl.useProgram(program);
+                gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+                gl.enableVertexAttribArray(aPos);
+                gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+                
+                gl.drawArrays(gl.TRIANGLES, 0, 3);
+                
+                frameCount++;
+                const now = performance.now();
+                if (now - lastTime >= 1000) {
+                    const fps = Math.round(frameCount * 1000 / (now - lastTime));
+                    document.getElementById('fps').textContent = fps;
+                    document.getElementById('status').textContent = `Running at ${fps} FPS`;
+                    frameCount = 0;
+                    lastTime = now;
+                }
+                
+                requestAnimationFrame(render);
+            }
+            
+            document.getElementById('status').textContent = 'Starting render loop...';
+            console.log('▶️ Starting render loop');
+            render();
+        }
+    </script>
+</body>
+</html>

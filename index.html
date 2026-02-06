@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>黑洞引力透镜模拟</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+        }
+        #canvas {
+            display: block;
+            cursor: crosshair;
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        #controls h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+        #controls .section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #controls .divider {
+            width: 1px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        #info {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 6px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        #info .title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #ff6666;
+        }
+        #info .param {
+            color: #aaa;
+        }
+        #info .value {
+            color: white;
+            font-weight: bold;
+        }
+        button {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px 5px 0 0;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #666;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .slider-container label {
+            white-space: nowrap;
+            font-size: 12px;
+        }
+        input[type="range"] {
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <div id="controls">
+        <h3>黑洞引力透镜模拟</h3>
+        <div class="divider"></div>
+        <div class="section">
+            <div class="slider-container">
+                <label>速度: <span id="speedValue">1.0</span></label>
+                <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1.0">
+            </div>
+        </div>
+        <div class="divider"></div>
+        <div class="section">
+            <button id="clearBtn">清除</button>
+            <button id="resetBtn">重置</button>
+        </div>
+    </div>
+    <div id="info">
+        <div class="title">Sagittarius A* (人马座A*)</div>
+        <div><span class="param">质量:</span> <span class="value" id="massValue"></span></div>
+        <div><span class="param">史瓦西半径 Rs:</span> <span class="value" id="rsValue"></span></div>
+    </div>
+    <script src="blackhole.js"></script>
+</body>
+</html>
