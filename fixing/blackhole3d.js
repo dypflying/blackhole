@@ -1019,6 +1019,13 @@ class Engine {
             document.getElementById('rayCount').textContent = (this.resolution * this.resolution).toLocaleString();
         }
         
+        const viewAngleDeg = 90 - (this.camera.elevation * 180 / Math.PI);
+        const angleEl = document.getElementById('angleValue');
+        if (angleEl) {
+            const sign = viewAngleDeg >= 0 ? '+' : '';
+            angleEl.textContent = sign + viewAngleDeg.toFixed(1) + '°';
+        }
+        
         this.rendering = false;
         requestAnimationFrame(() => this.render());
     }
