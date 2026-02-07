@@ -188,6 +188,49 @@
         .hidden {
             display: none;
         }
+        
+        #renderProgress {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(20, 20, 30, 0.95);
+            padding: 30px 50px;
+            border-radius: 16px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(76, 175, 80, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            display: none;
+            z-index: 1000;
+        }
+        #renderProgress .progress-text {
+            color: #4CAF50;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        #renderProgress .progress-bar-container {
+            width: 300px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        #renderProgress .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #66BB6A);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        #renderProgress .progress-info {
+            color: #aaa;
+            font-size: 13px;
+        }
+        .rendering-overlay {
+            cursor: not-allowed !important;
+        }
     </style>
 </head>
 <body>
@@ -250,6 +293,17 @@
         <div id="loading">
             <div class="spinner"></div>
             <div>Initializing Black Hole Simulation...</div>
+        </div>
+        
+        <div id="renderProgress">
+            <div class="progress-text">Rendering...</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="renderProgressBar"></div>
+            </div>
+            <div class="progress-info">
+                <span id="renderProgressPercent">0%</span> - 
+                <span id="renderProgressWorkers">0/4</span> workers completed
+            </div>
         </div>
     </div>
 

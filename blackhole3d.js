@@ -800,6 +800,7 @@ class Engine {
         const canvas = this.canvas;
         
         canvas.addEventListener('mousedown', (e) => {
+            if (this.raytracing) return;
             this.camera.dragging = true;
             this.camera.panning = e.metaKey || e.ctrlKey;
             this.camera.lastX = e.clientX;
@@ -808,6 +809,7 @@ class Engine {
         });
         
         canvas.addEventListener('mousemove', (e) => {
+            if (this.raytracing) return;
             if (this.camera.dragging) {
                 const dx = e.clientX - this.camera.lastX;
                 const dy = e.clientY - this.camera.lastY;
@@ -818,12 +820,14 @@ class Engine {
         });
         
         canvas.addEventListener('mouseup', () => {
+            if (this.raytracing) return;
             this.camera.dragging = false;
             this.camera.panning = false;
             this.startRaytracing();
         });
         
         canvas.addEventListener('wheel', (e) => {
+            if (this.raytracing) return;
             e.preventDefault();
             this.camera.processScroll(e.deltaY);
             this.stopRaytracing();
@@ -837,6 +841,10 @@ class Engine {
             this.resolution = parseInt(e.target.value);
             document.getElementById('resValue').textContent = this.resolution;
             this.stopRaytracing();
+            clearTimeout(this.resolutionTimeout);
+            this.resolutionTimeout = setTimeout(() => {
+                this.startRaytracing();
+            }, 500);
         });
         
         document.getElementById('stepsSlider').addEventListener('input', (e) => {
@@ -882,6 +890,11 @@ class Engine {
         const startTime = performance.now();
         
         document.getElementById('progress').style.display = 'block';
+        document.getElementById('renderProgress').style.display = 'block';
+        document.getElementById('renderProgressBar').style.width = '0%';
+        document.getElementById('renderProgressPercent').textContent = '0%';
+        document.getElementById('renderProgressWorkers').textContent = '0/' + this.workerCount;
+        this.canvas.classList.add('rendering-overlay');
         
         const cameraData = {
             position: this.camera.position(),
@@ -906,7 +919,11 @@ class Engine {
                 completedWorkers++;
                 
                 const progress = completedWorkers / this.workerCount;
-                document.getElementById('progressValue').textContent = Math.round(progress * 100) + '%';
+                const percent = Math.round(progress * 100);
+                document.getElementById('progressValue').textContent = percent + '%';
+                document.getElementById('renderProgressBar').style.width = percent + '%';
+                document.getElementById('renderProgressPercent').textContent = percent + '%';
+                document.getElementById('renderProgressWorkers').textContent = completedWorkers + '/' + this.workerCount;
                 
                 if (completedWorkers === this.workerCount) {
                     const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
@@ -914,9 +931,11 @@ class Engine {
                     
                     this.mergeWorkerResults(width, height);
                     this.raytracing = false;
+                    this.canvas.classList.remove('rendering-overlay');
                     
                     setTimeout(() => {
                         document.getElementById('progress').style.display = 'none';
+                        document.getElementById('renderProgress').style.display = 'none';
                     }, 1000);
                 }
             };
