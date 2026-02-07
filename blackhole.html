@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>黑洞引力透镜模拟</title>
+    <title>Black Hole Simulation</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23000'/%3E%3Cstop offset='40%25' stop-color='%23000'/%3E%3Cstop offset='45%25' stop-color='%23ff4444'/%3E%3Cstop offset='100%25' stop-color='%23ff8800'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='45' fill='url(%23g)'/%3E%3C/svg%3E">
     <style>
         body {
             margin: 0;
@@ -29,20 +30,25 @@
             display: flex;
             align-items: center;
             gap: 15px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             justify-content: center;
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            min-width: 780px;
+            max-width: 95vw;
         }
         #controls h3 {
             margin: 0;
             font-size: 16px;
+            white-space: nowrap;
+            line-height: 30px;
         }
         #controls .section {
             display: flex;
             align-items: center;
             gap: 10px;
+            height: 30px;
         }
         #controls .divider {
             width: 1px;
@@ -81,10 +87,12 @@
             background: #444;
             color: white;
             border: none;
-            padding: 8px 15px;
-            margin: 5px 5px 0 0;
+            padding: 6px 15px;
             border-radius: 3px;
             cursor: pointer;
+            font-size: 12px;
+            height: 30px;
+            line-height: 18px;
         }
         button:hover {
             background: #666;
@@ -93,6 +101,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            height: 30px;
         }
         .slider-container label {
             white-space: nowrap;
@@ -100,15 +109,19 @@
         }
         input[type="range"] {
             width: 100px;
+            height: 30px;
+            vertical-align: middle;
         }
         select {
             background: #333;
             color: #fff;
             border: 1px solid #555;
             border-radius: 4px;
-            padding: 6px 10px;
+            padding: 0 10px;
             font-size: 12px;
             cursor: pointer;
+            height: 30px;
+            line-height: 28px;
         }
         select:hover {
             background: #444;
@@ -118,33 +131,40 @@
 <body>
     <canvas id="canvas"></canvas>
     <div id="controls">
-        <h3>黑洞引力透镜模拟</h3>
+        <h3 data-i18n="title">Black Hole Simulation</h3>
         <div class="divider"></div>
         <div class="section">
-            <label>模式:</label>
+            <label data-i18n="mode">Mode:</label>
             <select id="modeSelect">
-                <option value="single">单光线模拟</option>
-                <option value="batch">批量光线模拟</option>
-                <option value="click">点击切线模式</option>
+                <option value="single" data-i18n="modeSingle">Single Ray</option>
+                <option value="batch" data-i18n="modeBatch">Batch Rays</option>
+                <option value="click" data-i18n="modeClick">Click Tangential</option>
             </select>
         </div>
         <div class="divider"></div>
         <div class="section">
             <div class="slider-container">
-                <label>速度: <span id="speedValue">1.0</span></label>
+                <label><span data-i18n="speed">Speed</span>: <span id="speedValue">1.0</span></label>
                 <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1.0">
             </div>
         </div>
         <div class="divider"></div>
         <div class="section">
-            <button id="clearBtn">清除</button>
-            <button id="resetBtn">重置</button>
+            <button id="clearBtn" data-i18n="clear">Clear</button>
+            <button id="resetBtn" data-i18n="reset">Reset</button>
+        </div>
+        <div class="divider"></div>
+        <div class="section">
+            <select id="langSelect">
+                <option value="en">English</option>
+                <option value="zh">中文</option>
+            </select>
         </div>
     </div>
     <div id="info">
-        <div class="title">Sagittarius A* (人马座A*)</div>
-        <div><span class="param">质量:</span> <span class="value" id="massValue"></span></div>
-        <div><span class="param">史瓦西半径 Rs:</span> <span class="value" id="rsValue"></span></div>
+        <div class="title" data-i18n="blackHoleName">Sagittarius A*</div>
+        <div><span class="param" data-i18n="mass">Mass:</span> <span class="value" id="massValue"></span></div>
+        <div><span class="param" data-i18n="rs">Schwarzschild Radius Rs:</span> <span class="value" id="rsValue"></span></div>
     </div>
     <script src="blackhole.js"></script>
 </body>
