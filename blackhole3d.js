@@ -118,6 +118,9 @@ self.onmessage = function(e) {
     
     const D_LAMBDA = 5e7;
     const ESCAPE_R = 5e13;
+    const DISK_H = blackHole.rs * 0.02;
+    const r1Sq = disk.r1 * disk.r1;
+    const r2Sq = disk.r2 * disk.r2;
     
     const pixels = new Uint8Array(width * (endRow - startRow) * 4);
     
@@ -130,7 +133,7 @@ self.onmessage = function(e) {
             const ray = new Ray(camPos, dir, blackHole.rs);
             
             let color = [0, 0, 0, 255];
-            let prevY = ray.y;
+            let prevX = ray.x, prevY = ray.y, prevZ = ray.z;
             
             for (let step = 0; step < maxSteps; step++) {
                 if (ray.r <= blackHole.rs * 1.1) {
@@ -140,21 +143,38 @@ self.onmessage = function(e) {
                 
                 ray.rk4Step(D_LAMBDA, blackHole.rs);
                 
-                const newY = ray.y;
-                if (prevY * newY < 0) {
-                    const r2d = Math.sqrt(ray.x * ray.x + ray.z * ray.z);
-                    if (r2d >= disk.r1 && r2d <= disk.r2) {
-                        const t = r2d / disk.r2;
-                        color = [
-                            255,
-                            Math.floor(t * 255),
-                            51,
-                            255
-                        ];
+                const yA = prevY, yB = ray.y;
+                let diskHit = false;
+                let hitX, hitZ;
+                
+                if (yA * yB < 0) {
+                    const t = yA / (yA - yB);
+                    hitX = prevX + t * (ray.x - prevX);
+                    hitZ = prevZ + t * (ray.z - prevZ);
+                    diskHit = true;
+                } else if ((yA >= -DISK_H && yA <= DISK_H) || (yB >= -DISK_H && yB <= DISK_H)) {
+                    if (yB >= -DISK_H && yB <= DISK_H) {
+                        hitX = ray.x;
+                        hitZ = ray.z;
+                    } else {
+                        hitX = prevX;
+                        hitZ = prevZ;
+                    }
+                    diskHit = true;
+                }
+                
+                if (diskHit) {
+                    const rSq = hitX * hitX + hitZ * hitZ;
+                    if (rSq >= r1Sq && rSq <= r2Sq) {
+                        const t = Math.sqrt(rSq) / disk.r2;
+                        color = [255, Math.floor(t * 255), 51, 255];
                         break;
                     }
                 }
-                prevY = newY;
+                
+                prevX = ray.x;
+                prevY = ray.y;
+                prevZ = ray.z;
                 
                 let hitObj = false;
                 for (const obj of objects) {
