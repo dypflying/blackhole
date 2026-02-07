@@ -266,16 +266,48 @@ const engine = new Engine();
 const blackHole = new BlackHole(0, 0, 8.54e36);
 const rays = [];
 let simulationSpeed = 1.0;
+let simulationMode = 'single';
 
 document.getElementById('massValue').textContent = `${blackHole.massInSolarMasses.toExponential(2)} M☉`;
 document.getElementById('rsValue').textContent = `${(blackHole.r_s / 1e9).toFixed(2)} × 10⁹ m`;
 
+function clearAndReset() {
+    rays.length = 0;
+    engine.offsetX = 0;
+    engine.offsetY = 0;
+    engine.zoom = 1.0;
+}
+
 engine.canvas.addEventListener('click', (e) => {
     const world = engine.screenToWorld(e.clientX, e.clientY);
-    const worldWidth = engine.width / engine.zoom;
-    const emitterWorldX = -worldWidth * 0.8;
     
-    rays.push(new Ray(emitterWorldX, world.y, c, 0, blackHole));
+    if (simulationMode === 'single') {
+        const worldWidth = engine.width / engine.zoom;
+        const emitterWorldX = -worldWidth * 0.8;
+        rays.push(new Ray(emitterWorldX, world.y, c, 0, blackHole));
+    } else if (simulationMode === 'batch') {
+        const worldWidth = engine.width / engine.zoom;
+        const worldHeight = engine.height / engine.zoom;
+        const emitterWorldX = -worldWidth * 0.8;
+        const numRays = 20;
+        const spacing = (2 * worldHeight) / (numRays + 1);
+        
+        for (let i = 1; i <= numRays; i++) {
+            const y = -worldHeight + i * spacing;
+            rays.push(new Ray(emitterWorldX, y, c, 0, blackHole));
+        }
+    } else if (simulationMode === 'click') {
+        const dx = world.x - blackHole.x;
+        const dy = world.y - blackHole.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist > blackHole.r_s * 1.5) {
+            const tangentDirX = dy / dist;
+            const tangentDirY = -dx / dist;
+            
+            rays.push(new Ray(world.x, world.y, tangentDirX * c, tangentDirY * c, blackHole));
+        }
+    }
 });
 
 engine.canvas.addEventListener('wheel', (e) => {
@@ -328,6 +360,11 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     engine.zoom = 1.0;
 });
 
+document.getElementById('modeSelect').addEventListener('change', (e) => {
+    simulationMode = e.target.value;
+    clearAndReset();
+});
+
 const speedSlider = document.getElementById('speedSlider');
 const speedValue = document.getElementById('speedValue');
 speedSlider.addEventListener('input', (e) => {
@@ -338,7 +375,9 @@ speedSlider.addEventListener('input', (e) => {
 function animate() {
     engine.clear();
     
-    engine.drawEmitterZone();
+    if (simulationMode === 'single' || simulationMode === 'batch') {
+        engine.drawEmitterZone();
+    }
     
     blackHole.draw(engine);
     

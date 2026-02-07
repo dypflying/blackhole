@@ -21,16 +21,19 @@
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(20, 20, 30, 0.9);
             color: white;
             padding: 10px 25px;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 13px;
             display: flex;
             align-items: center;
             gap: 15px;
             flex-wrap: wrap;
             justify-content: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
         #controls h3 {
             margin: 0;
@@ -48,14 +51,18 @@
         }
         #info {
             position: absolute;
-            bottom: 15px;
+            top: 15px;
             left: 15px;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(20, 20, 30, 0.9);
             color: white;
-            padding: 12px 18px;
-            border-radius: 6px;
+            padding: 15px;
+            border-radius: 8px;
             font-size: 12px;
             line-height: 1.6;
+            max-width: 300px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
         #info .title {
             font-size: 14px;
@@ -94,12 +101,33 @@
         input[type="range"] {
             width: 100px;
         }
+        select {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        select:hover {
+            background: #444;
+        }
     </style>
 </head>
 <body>
     <canvas id="canvas"></canvas>
     <div id="controls">
         <h3>黑洞引力透镜模拟</h3>
+        <div class="divider"></div>
+        <div class="section">
+            <label>模式:</label>
+            <select id="modeSelect">
+                <option value="single">单光线模拟</option>
+                <option value="batch">批量光线模拟</option>
+                <option value="click">点击切线模式</option>
+            </select>
+        </div>
         <div class="divider"></div>
         <div class="section">
             <div class="slider-container">
