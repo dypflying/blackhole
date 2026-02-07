@@ -435,120 +435,6 @@ class Ray {
 }
 
 // ============================================================================
-// Raytracer
-// ============================================================================
-class Raytracer {
-    constructor(width, height, blackHole, objects, disk) {
-        this.width = width;
-        this.height = height;
-        this.blackHole = blackHole;
-        this.objects = objects;
-        this.disk = disk;
-        this.pixels = new Uint8Array(width * height * 4);
-        this.currentRow = 0;
-        this.isComplete = false;
-    }
-
-    traceChunk(camera, maxSteps, rowsPerChunk = 5) {
-        const camPos = camera.position();
-        const forward = camera.target.sub(camPos).normalize();
-        const right = new Vec3(0, 1, 0).cross(forward).normalize();
-        const up = right.cross(forward);
-        
-        const aspect = this.width / this.height;
-        const tanHalfFov = Math.tan((60 * Math.PI / 180) / 2);
-        
-        const D_LAMBDA = 5e7;
-        const ESCAPE_R = 5e13;
-        
-        const endRow = Math.min(this.currentRow + rowsPerChunk, this.height);
-        
-        for (let py = this.currentRow; py < endRow; py++) {
-            for (let px = 0; px < this.width; px++) {
-                const u = (2.0 * (px + 0.5) / this.width - 1.0) * aspect * tanHalfFov;
-                const v = (1.0 - 2.0 * (py + 0.5) / this.height) * tanHalfFov;
-                
-                const dir = right.mul(u).add(up.mul(v)).add(forward).normalize();
-                const ray = new Ray(camPos, dir, this.blackHole.rs);
-                
-                let color = [0, 0, 0, 255];
-                let prevY = ray.y;
-                
-                for (let step = 0; step < maxSteps; step++) {
-                    if (ray.r <= this.blackHole.rs * 1.1) {
-                        color = [0, 0, 0, 255];
-                        break;
-                    }
-                    
-                    ray.rk4Step(D_LAMBDA, this.blackHole.rs);
-                    
-                    const newY = ray.y;
-                    if (prevY * newY < 0) {
-                        const r2d = Math.sqrt(ray.x * ray.x + ray.z * ray.z);
-                        if (r2d >= this.disk.r1 && r2d <= this.disk.r2) {
-                            const t = r2d / this.disk.r2;
-                            color = [
-                                255,
-                                Math.floor(t * 255),
-                                51,
-                                255
-                            ];
-                            break;
-                        }
-                    }
-                    prevY = newY;
-                    
-                    let hitObj = false;
-                    for (const obj of this.objects) {
-                        const dist = Vec3.distance(new Vec3(ray.x, ray.y, ray.z), obj.position);
-                        if (dist <= obj.radius) {
-                            const P = new Vec3(ray.x, ray.y, ray.z);
-                            const N = P.sub(obj.position).normalize();
-                            const V = camPos.sub(P).normalize();
-                            const diff = Math.max(N.dot(V), 0);
-                            const intensity = 0.1 + 0.9 * diff;
-                            
-                            color = [
-                                Math.floor(obj.color[0] * 255 * intensity),
-                                Math.floor(obj.color[1] * 255 * intensity),
-                                Math.floor(obj.color[2] * 255 * intensity),
-                                255
-                            ];
-                            hitObj = true;
-                            break;
-                        }
-                    }
-                    if (hitObj) break;
-                    
-                    if (ray.r > ESCAPE_R) break;
-                }
-                
-                const idx = (py * this.width + px) * 4;
-                this.pixels[idx] = color[0];
-                this.pixels[idx + 1] = color[1];
-                this.pixels[idx + 2] = color[2];
-                this.pixels[idx + 3] = color[3];
-            }
-        }
-        
-        this.currentRow = endRow;
-        this.isComplete = this.currentRow >= this.height;
-        
-        return {
-            pixels: this.pixels,
-            progress: this.currentRow / this.height,
-            complete: this.isComplete
-        };
-    }
-
-    reset() {
-        this.currentRow = 0;
-        this.isComplete = false;
-        this.pixels.fill(0);
-    }
-}
-
-// ============================================================================
 // WebGL Grid Renderer
 // ============================================================================
 class GridRenderer {
@@ -674,45 +560,32 @@ class GridRenderer {
 // ============================================================================
 class Engine {
     constructor(canvas) {
-        console.log('🔧 Engine constructor started');
-        
         this.canvas = canvas;
         this.gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
         
         if (!this.gl) {
-            console.error('❌ WebGL not supported!');
+            console.error('WebGL not supported!');
             alert('WebGL not supported');
             return;
         }
         
-        console.log('✅ WebGL context created');
-        console.log(`WebGL Version: ${this.gl.getParameter(this.gl.VERSION)}`);
-        console.log(`WebGL Vendor: ${this.gl.getParameter(this.gl.VENDOR)}`);
-        
         this.camera = new Camera();
         this.blackHole = new BlackHole(new Vec3(0, 0, 0), 8.54e36);
-        
-        console.log(`🕳️ Black hole created: Rs = ${(this.blackHole.rs / 1e10).toFixed(2)}×10¹⁰ m`);
         
         this.objects = [
             new CelestialObject(new Vec3(4e11, 0, 0), 4e10, [1, 1, 0], 1.98892e30),
             new CelestialObject(new Vec3(0, 0, 4e11), 4e10, [1, 0, 0], 1.98892e30),
         ];
         
-        console.log(`🌟 Created ${this.objects.length} celestial objects`);
-        
         this.disk = {
             r1: this.blackHole.rs * 2.2,
             r2: this.blackHole.rs * 5.2
         };
         
-        console.log(`💿 Accretion disk: ${(this.disk.r1 / 1e10).toFixed(2)}×10¹⁰ m - ${(this.disk.r2 / 1e10).toFixed(2)}×10¹⁰ m`);
-        
         this.resolution = 150;
         this.maxSteps = 5000;
         this.gravityEnabled = false;
         this.rendering = false;
-        this.raytracer = null;
         this.raytracing = false;
         
         this.workers = [];
@@ -720,7 +593,6 @@ class Engine {
         this.workerResults = [];
         this.createWorkers(this.workerCount);
         
-        console.log('🎨 Setting up WebGL resources...');
         this.gridRenderer = new GridRenderer(this.gl);
         this.setupTexture();
         this.setupQuad();
@@ -729,8 +601,6 @@ class Engine {
         this.lastFrameTime = performance.now();
         this.frameCount = 0;
         this.fps = 0;
-        
-        console.log('✅ Engine initialization complete');
     }
 
     createWorkers(count) {
@@ -744,7 +614,6 @@ class Engine {
         }
         
         this.workerCount = count;
-        console.log('👷 Created ' + count + ' workers');
     }
 
     terminateWorkers() {
@@ -762,6 +631,9 @@ class Engine {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        // Initialize texture with correct size immediately
+        const initPixels = new Uint8Array(this.resolution * this.resolution * 4);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.resolution, this.resolution, 0, gl.RGBA, gl.UNSIGNED_BYTE, initPixels);
     }
 
     setupQuad() {
@@ -884,21 +756,18 @@ class Engine {
         
         document.getElementById('resetBtn').addEventListener('click', () => {
             this.camera.reset();
+            this.stopRaytracing();
             this.startRaytracing();
         });
     }
 
     stopRaytracing() {
         this.raytracing = false;
-        if (this.raytracer) {
-            console.log('⏸️ Raytracing stopped');
-        }
     }
 
     startRaytracing() {
         if (this.raytracing) return;
         
-        console.log('▶️ Starting multi-worker raytracing (' + this.workerCount + ' workers)...');
         this.raytracing = true;
         
         const width = this.resolution;
@@ -946,9 +815,6 @@ class Engine {
                 document.getElementById('renderProgressWorkers').textContent = completedWorkers + '/' + this.workerCount;
                 
                 if (completedWorkers === this.workerCount) {
-                    const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
-                    console.log('✅ Raytracing complete in ' + elapsed + 's');
-                    
                     this.mergeWorkerResults(width, height);
                     this.raytracing = false;
                     this.canvas.classList.remove('rendering-overlay');
@@ -1105,29 +971,15 @@ class Engine {
 // Initialize
 // ============================================================================
 window.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Initializing Black Hole 3D Visualization...');
-    
     const canvas = document.getElementById('glCanvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
-    console.log(`📐 Canvas size: ${canvas.width}x${canvas.height}`);
-    
     window.addEventListener('resize', () => {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        console.log(`📐 Canvas resized: ${canvas.width}x${canvas.height}`);
     });
     
-    console.log('⚙️ Creating engine...');
     const engine = new Engine(canvas);
-    
-    console.log('✅ Engine created successfully!');
-    console.log(`🎯 Initial settings:
-    - Resolution: ${engine.resolution}x${engine.resolution}
-    - Max steps: ${engine.maxSteps}
-    - Black hole Rs: ${(engine.blackHole.rs / 1e10).toFixed(2)}×10¹⁰ m`);
-    
     engine.start();
-    console.log('▶️ Rendering started!');
 });
